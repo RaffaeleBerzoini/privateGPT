@@ -7,6 +7,8 @@ from langchain.vectorstores import Chroma
 from langchain.llms import GPT4All, LlamaCpp
 import os
 import argparse
+import time
+from ingest import chunk_size, chunk_overlap
 
 load_dotenv()
 
@@ -40,6 +42,7 @@ def main():
     qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever, return_source_documents=True)
     # Interactive questions and answers
     
+    start_time = time.time()
     query = read_text_file(question_file)
     if query == "exit":
         return
@@ -55,6 +58,7 @@ def main():
     print(answer)
 
     write_text_file(answer_file, answer)
+
     append_text_file(answer_file, "\nSOURCES:")
 
     # Print the relevant sources used for the answer
@@ -67,6 +71,12 @@ def main():
         append_text_file(answer_file, document.page_content)
 
     remove_empty_lines(answer_file)
+    
+    end_time = time.time()
+    execution_time = end_time - start_time
+    execution_time = round(execution_time, 0)
+
+    append_text_file(answer_file, "\n\nExecution time: " + str(execution_time) + " with\n\t-chunk size:\t" + str(chunk_size) + "\n\t-chunk overlap:\t" + str(chunk_overlap))
 
 def read_text_file(file_path):
     try:
